@@ -22,6 +22,7 @@ def get_sys_args():
 
 def main(args):
     X, Y = Path(args.X), list(map(Path, args.Y))
+    print(X, Y)
     all_files = collect_files(X, Y)
     config = load_config(get_home_path() / ".clean_files")
 

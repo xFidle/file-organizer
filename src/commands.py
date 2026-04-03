@@ -16,8 +16,8 @@ def remove_file(fpath):
 
 
 def apply_removed(all_files, changes):
-    removed_paths = {ch["path"] for ch in changes}
-    all_files[:] = [entry for entry in all_files if entry["path"] not in removed_paths]
+    for change in changes:
+        all_files.pop(change["path"])
 
 
 def rename_file(fpath, new_fpath):
@@ -32,15 +32,12 @@ def rename_file(fpath, new_fpath):
 
 
 def apply_renamed(all_files, changes):
-    changes_by_old_path = {ch["old_path"]: ch for ch in changes}
-    for entry in all_files:
-        change = changes_by_old_path.get(entry["path"])
-        if change is None:
-            continue
+    for change in changes:
+        entry = all_files.pop(change["old_path"])
         new_path = change["new_path"]
-        entry["path"] = new_path
-        entry["name"] = new_path.name
-        entry["rel"] = entry["rel"].parent / new_path.name
+        entry.name = new_path
+        entry.rel = entry.rel.parent / new_path.name
+        all_files[new_path] = entry
 
 
 def chmod_file(fpath, mode):
@@ -54,12 +51,9 @@ def chmod_file(fpath, mode):
 
 
 def apply_chmod(all_files, changes):
-    changes_by_path = {ch["path"]: ch for ch in changes}
-    for entry in all_files:
-        change = changes_by_path.get(entry["path"])
-        if change is None:
-            continue
-        entry["mode"] = change["mode"]
+    for change in changes:
+        path = change["path"]
+        all_files[path].mode = change["mode"]
 
 
 def move_file(src, dest):
@@ -70,6 +64,10 @@ def move_file(src, dest):
     except Exception:
         print("-> Error moving file from {} to {}".format(src, dest))
         return None
+
+
+# def apply_moved(all_files, changes):
+#     all_files[:] = [f for f in all_files if f["path"] != ]
 
 
 def move_file_safely(src, dest, fallback_dir):

@@ -7,23 +7,20 @@ X_KIND = "X"
 Y_KIND = "Y"
 
 
-def ask_user(prompt, options, auto_accept=False):
-    if auto_accept:
-        return options[0]
-
-    while True:
-        answer = input(prompt + " ")
-        if answer.strip() in options:
-            return answer
-
-
-def print_instruction(instruction):
-    for key, info in instruction.items():
-        print("[{}] {}".format(key, info))
+class FileEntry:
+    def __init__(self, path, root, kind, rel, name, size, m_time, mode):
+        self.path = path
+        self.root = root
+        self.kind = kind
+        self.rel = rel
+        self.name = name
+        self.size = size
+        self.m_time = m_time
+        self.mode = mode
 
 
 def collect_files(X, Y_dirs):
-    result = []
+    result = {}
 
     scan_roots = [(X, X_KIND)]
     scan_roots.extend([(Y, Y_KIND) for Y in Y_dirs])
@@ -40,20 +37,35 @@ def collect_files(X, Y_dirs):
                 except OSError:
                     continue
 
-                entry = {
-                    "path": full_path,
-                    "root": root,
-                    "kind": root_kind,
-                    "rel": full_path.relative_to(root),
-                    "name": full_path.name,
-                    "size": st.st_size,
-                    "m_time": st.st_mtime,
-                    "mode": stat.S_IMODE(st.st_mode),
-                }
+                entry = FileEntry(
+                    path=full_path,
+                    root=root,
+                    kind=root_kind,
+                    rel=full_path.relative_to(root),
+                    name=full_path.name,
+                    size=st.st_size,
+                    m_time=st.st_mtime,
+                    mode=stat.S_IMODE(st.st_mode),
+                )
 
-                result.append(entry)
+                result[full_path] = entry
 
     return result
+
+
+def ask_user(prompt, options, auto_accept=False):
+    if auto_accept:
+        return options[0]
+
+    while True:
+        answer = input(prompt + " ")
+        if answer.strip() in options:
+            return answer
+
+
+def print_instruction(instruction):
+    for key, info in instruction.items():
+        print("[{}] {}".format(key, info))
 
 
 def get_hash(fpath, block_size=1 << 16):
