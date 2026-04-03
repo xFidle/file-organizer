@@ -1,6 +1,10 @@
 import hashlib
 import os
+import stat
 from pathlib import Path
+
+X_KIND = "X"
+Y_KIND = "Y"
 
 
 def ask_user(prompt, options):
@@ -15,14 +19,37 @@ def print_instruction(instruction):
         print("[{}] {}".format(key, info))
 
 
-def collect_files(directories):
-    result: set[Path] = set()
-    for dir in directories:
-        for root, _, files in os.walk(dir, topdown=True):
+def collect_files(X, Y_dirs):
+    result = []
+
+    scan_roots = [(X, X_KIND)]
+    scan_roots.extend([(Y, Y_KIND) for Y in Y_dirs])
+
+    for root, root_kind in scan_roots:
+        for walk_dir, _, files in os.walk(root, topdown=True):
             for fname in files:
-                full_path = Path(root) / fname
-                if full_path.is_file():
-                    result.add(full_path)
+                full_path = Path(walk_dir) / fname
+                if not full_path.is_file():
+                    continue
+
+                try:
+                    st = full_path.stat()
+                except OSError:
+                    continue
+
+                entry = {
+                    "path": full_path,
+                    "root": root,
+                    "kind": root_kind,
+                    "rel": full_path.relative_to(root),
+                    "name": full_path.name,
+                    "size": st.st_size,
+                    "m_time": st.st_mtime,
+                    "mode": stat.S_IMODE(st.st_mode),
+                }
+
+                result.append(entry)
+
     return result
 
 
@@ -47,12 +74,16 @@ def find_new_name(fpath, messy_chars, substitute):
         f = f.replace(ch, substitute)
 
     new_fpath = Path(f)
-    if not new_fpath.exists():
-        return new_fpath
+    return generate_unique_path(new_fpath)
 
-    parent = new_fpath.parent
-    stem = new_fpath.stem
-    suffix = new_fpath.suffix
+
+def generate_unique_path(fpath):
+    if not fpath.exists():
+        return fpath
+
+    parent = fpath.parent
+    stem = fpath.stem
+    suffix = fpath.suffix
     i = 1
     while True:
         new_fpath = parent / "{}_{}{}".format(stem, i, suffix)
