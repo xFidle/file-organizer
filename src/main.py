@@ -11,6 +11,7 @@ def get_sys_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("X", help="Main directory directory")
     parser.add_argument("Y", nargs="+", help="Additional dirs to compare against X [Y1, Y2, ...]")
+    parser.add_argument("--auto-accept", action="store_true", help="Auto accept default action, don't ask for input")
     parser.add_argument("-e", "--empty", action="store_true", help="Delete empty files")
     parser.add_argument("-t", "--temporary", action="store_true", help="Delete temporary files")
     parser.add_argument("-m", "--messy", action="store_true", help="Sanitize messy files")

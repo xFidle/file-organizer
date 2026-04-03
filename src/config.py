@@ -1,6 +1,6 @@
 DEFAULT_CONFIG = {
     "mode": "644",
-    "messy_chars": "'*?$#`|\\\"",
+    "messy_chars": "[]()'*?$#`|\\\" ",
     "substitute": "_",
     "temp_patterns": "*~,*.tmp,*.swp,*.bak",
 }

@@ -7,7 +7,10 @@ X_KIND = "X"
 Y_KIND = "Y"
 
 
-def ask_user(prompt, options):
+def ask_user(prompt, options, auto_accept=False):
+    if auto_accept:
+        return options[0]
+
     while True:
         answer = input(prompt + " ")
         if answer.strip() in options:

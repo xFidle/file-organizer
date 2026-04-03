@@ -34,7 +34,7 @@ def handle_duplicates(group, X, fallback_dir):
 
         if to_keep["kind"] != X_KIND:
             print("WARNING: File to KEEP is not from 'X'!")
-        print("File to KEEP {} (oldest one)".format(to_keep["path"]))
+        print("File to KEEP {}".format(to_keep["path"]))
         print("Found {} file duplicate(s)".format(len(to_remove)))
 
         r = _interactive_pipeline(
@@ -53,7 +53,7 @@ def _duplicates_prehook(to_keep, X, fallback_dir):
         return True
 
     answer = ask_user(
-        "Move selected file to X? [y/N/q]",
+        "Move selected file to X? [y, N, q]",
         ["y", "N", "q"],
     )
     if answer == "y":
