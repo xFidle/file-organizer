@@ -4,7 +4,7 @@ from commands import chmod_file, move_file_safely, remove_file, rename_file
 from utils import X_KIND, ask_user, find_new_name, get_hash, print_instruction
 
 
-def handle_duplicates(all_files, X, fallback_dir):
+def handle_duplicates(all_files, X, fallback_dir, auto_accept):
     files_by_hash = {}
     for entry in all_files.values():
         if entry.size == 0:
@@ -41,21 +41,19 @@ def handle_duplicates(all_files, X, fallback_dir):
             to_remove,
             remove_file,
             "Delete",
-            prehook=lambda: _duplicates_prehook(to_keep, X, fallback_dir),
+            auto_accept,
+            prehook=lambda: _duplicates_prehook(to_keep, X, fallback_dir, auto_accept),
         )
         removed.extend(r)
 
     return removed
 
 
-def _duplicates_prehook(to_keep, X, fallback_dir):
+def _duplicates_prehook(to_keep, X, fallback_dir, auto_accept):
     if to_keep.kind == X_KIND:
         return True
 
-    answer = ask_user(
-        "Move selected file to X? [y, N, q]",
-        ["y", "N", "q"],
-    )
+    answer = ask_user("Move selected file to X? [y, N, q]", ["y", "N", "q"], auto_accept)
     if answer == "y":
         res = move_file_safely(
             to_keep.path,
@@ -75,7 +73,7 @@ def _duplicates_prehook(to_keep, X, fallback_dir):
         return True
 
 
-def handle_permissions(file_entries, mode):
+def handle_permissions(file_entries, mode, auto_accept):
     invalid_files = [path for path, entry in file_entries.items() if entry.mode != mode]
 
     print("Found {} file(s) with invalid permissions.".format(len(invalid_files)))
@@ -83,10 +81,10 @@ def handle_permissions(file_entries, mode):
     if not invalid_files:
         return
 
-    return _interactive_pipeline(invalid_files, lambda x: chmod_file(x, mode), "CHMOD")
+    return _interactive_pipeline(invalid_files, lambda x: chmod_file(x, mode), "CHMOD", auto_accept)
 
 
-def handle_messy_files(file_entries, messy_chars, substitute):
+def handle_messy_files(file_entries, messy_chars, substitute, auto_accept):
     messy_files = [path for path, entry in file_entries.items() if any(c in messy_chars for c in entry.name)]
 
     print("Found {} messy file(s)".format(len(messy_files)))
@@ -98,10 +96,11 @@ def handle_messy_files(file_entries, messy_chars, substitute):
         messy_files,
         lambda x: rename_file(x, find_new_name(x, messy_chars, substitute)),
         "Sanitize (replace messy chars with '{}')".format(substitute),
+        auto_accept,
     )
 
 
-def handle_temporary_files(file_entries, patterns):
+def handle_temporary_files(file_entries, patterns, auto_accept):
     temporary_files = [
         path for path, entry in file_entries.items() if any(fnmatch.fnmatch(entry.name, p) for p in patterns)
     ]
@@ -111,10 +110,10 @@ def handle_temporary_files(file_entries, patterns):
     if not temporary_files:
         return []
 
-    return _interactive_pipeline(temporary_files, remove_file, "Delete")
+    return _interactive_pipeline(temporary_files, remove_file, "Delete", auto_accept)
 
 
-def handle_empty_files(file_entries):
+def handle_empty_files(file_entries, auto_accept):
     empty_files = [path for path, entry in file_entries.items() if entry.size == 0]
 
     print("Found {} empty file(s).".format(len(empty_files)))
@@ -122,10 +121,10 @@ def handle_empty_files(file_entries):
     if not empty_files:
         return []
 
-    return _interactive_pipeline(empty_files, remove_file, "Delete")
+    return _interactive_pipeline(empty_files, remove_file, "Delete", auto_accept)
 
 
-def _interactive_pipeline(paths, fn, action, prehook=None):
+def _interactive_pipeline(paths, fn, action, auto_accept, prehook=None):
     if prehook is not None and not prehook():
         return []
 
@@ -140,7 +139,7 @@ def _interactive_pipeline(paths, fn, action, prehook=None):
 
     print_instruction(inst)
     while True:
-        answer = ask_user("What would you like to do?", list(inst.keys()))
+        answer = ask_user("What would you like to do?", list(inst.keys()), auto_accept)
         if answer != "p":
             break
         for path in paths:
@@ -162,6 +161,7 @@ def _interactive_pipeline(paths, fn, action, prehook=None):
             answer = ask_user(
                 "[{}/{}] File: {} {}? [y, N, q]".format(i + 1, n, path, action),
                 ["y", "N", "q"],
+                auto_accept,
             )
             if answer == "y":
                 result = fn(path)

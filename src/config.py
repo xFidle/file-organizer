@@ -3,6 +3,7 @@ DEFAULT_CONFIG = {
     "messy_chars": "[]()'*?$#`|\\\" ",
     "substitute": "_",
     "temp_patterns": "*~,*.tmp,*.swp,*.bak",
+    "duplicates_dir": "_dups",
 }
 
 
@@ -10,12 +11,11 @@ def load_config(config_file):
     config = DEFAULT_CONFIG
     lines = []
 
-    if config_file.exists():
-        with open(config_file, "r") as file_handle:
-            lines = file_handle.readlines()
+    with open(config_file, "r") as file_handle:
+        lines = file_handle.readlines()
 
-    for i in range(1, len(lines)):
-        key, value = lines[i].split("=", 1)
+    for line in lines:
+        key, value = line.split("=", 1)
         config[key.strip()] = value.strip()
 
     return config
@@ -35,3 +35,7 @@ def get_temp_patterns(config):
 
 def get_substitute_char(config):
     return config["substitute"]
+
+
+def get_duplicates_dir(config):
+    return config["duplicates_dir"]

@@ -2,9 +2,9 @@ import argparse
 from pathlib import Path
 
 from commands import apply_chmod, apply_removed, apply_renamed
-from config import get_messy_chars, get_mode, get_substitute_char, get_temp_patterns, load_config
+from config import get_duplicates_dir, get_messy_chars, get_mode, get_substitute_char, get_temp_patterns, load_config
 from funcs import handle_duplicates, handle_empty_files, handle_messy_files, handle_permissions, handle_temporary_files
-from utils import collect_files, get_home_path
+from utils import collect_files
 
 
 def get_sys_args():
@@ -24,26 +24,27 @@ def main(args):
     X, Y = Path(args.X), list(map(Path, args.Y))
     print(X, Y)
     all_files = collect_files(X, Y)
-    config = load_config(get_home_path() / ".clean_files")
+    config = load_config(".clean_files")
+    aa = args.auto_accept
 
     if args.empty:
-        changes = handle_empty_files(all_files)
+        changes = handle_empty_files(all_files, aa)
         apply_removed(all_files, changes)
 
     if args.temporary:
-        changes = handle_temporary_files(all_files, get_temp_patterns(config))
+        changes = handle_temporary_files(all_files, get_temp_patterns(config), aa)
         apply_removed(all_files, changes)
 
     if args.messy:
-        changes = handle_messy_files(all_files, get_messy_chars(config), get_substitute_char(config))
+        changes = handle_messy_files(all_files, get_messy_chars(config), get_substitute_char(config), aa)
         apply_renamed(all_files, changes)
 
     if args.permissions:
-        changes = handle_permissions(all_files, get_mode(config))
+        changes = handle_permissions(all_files, get_mode(config), aa)
         apply_chmod(all_files, changes)
 
     if args.duplicates:
-        changes = handle_duplicates(all_files, args.X, Path(args.X) / "_dups")
+        changes = handle_duplicates(all_files, args.X, Path(args.X) / get_duplicates_dir(config), aa)
         apply_removed(all_files, changes)
 
 
