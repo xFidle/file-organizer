@@ -67,7 +67,7 @@ def _duplicates_prehook(to_keep, X, fallback_dir, auto_accept, all_files):
             print("-> Error: {}".format(e))
             return False
 
-        if not res.get("skipped", False):
+        if res is not None:
             apply_moved(all_files, [res])
 
         return True
@@ -81,9 +81,6 @@ def handle_permissions(file_entries, mode, auto_accept):
 
     print("Found {} file(s) with invalid permissions.".format(len(invalid_files)))
 
-    if not invalid_files:
-        return
-
     return _interactive_pipeline(invalid_files, lambda x: chmod_file(x, mode), "CHMOD", auto_accept)
 
 
@@ -91,9 +88,6 @@ def handle_messy_files(file_entries, messy_chars, substitute, auto_accept):
     messy_files = [path for path, entry in file_entries.items() if any(c in messy_chars for c in entry.name)]
 
     print("Found {} messy file(s)".format(len(messy_files)))
-
-    if not messy_files:
-        return []
 
     return _interactive_pipeline(
         messy_files,
@@ -110,9 +104,6 @@ def handle_temporary_files(file_entries, patterns, auto_accept):
 
     print("Found {} temporary file(s).".format(len(temporary_files)))
 
-    if not temporary_files:
-        return []
-
     return _interactive_pipeline(temporary_files, remove_file, "Delete", auto_accept)
 
 
@@ -121,13 +112,13 @@ def handle_empty_files(file_entries, auto_accept):
 
     print("Found {} empty file(s).".format(len(empty_files)))
 
-    if not empty_files:
-        return []
-
     return _interactive_pipeline(empty_files, remove_file, "Delete", auto_accept)
 
 
 def _interactive_pipeline(paths, fn, action, auto_accept, prehook=None):
+    if not paths:
+        return []
+
     if prehook is not None and not prehook():
         return []
 

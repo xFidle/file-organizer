@@ -8,7 +8,7 @@ DEFAULT_CONFIG = {
 
 
 def load_config(config_file):
-    config = DEFAULT_CONFIG
+    config = dict(DEFAULT_CONFIG)
     lines = []
 
     with open(config_file, "r") as file_handle:
@@ -30,7 +30,7 @@ def get_messy_chars(config):
 
 
 def get_temp_patterns(config):
-    return config["temp_patterns"].split(",")
+    return config["temp_patterns"].split(";")
 
 
 def get_substitute_char(config):
