@@ -13,4 +13,4 @@ python3 src/main.py --auto-accept X Y1 Y2 -t
 [ -f X/normal.txt ] || exit 1
 
 rm -rf X Y1 Y2
-echo "PASS"
+exit 0

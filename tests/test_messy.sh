@@ -11,4 +11,4 @@ python3 src/main.py --auto-accept X Y1 Y2 -m
 [ -f Y2/_bad_name_.txt ]  || exit 1
 
 rm -rf X Y1 Y2
-echo "PASS"
+exit 0

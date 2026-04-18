@@ -16,4 +16,4 @@ python3 src/main.py --auto-accept X Y1 Y2 -p
 [ "$(stat -c "%a" Y2/p3.txt)" = "644" ] || exit 1
 
 rm -rf X Y1 Y2
-echo "PASS"
+exit 0
