@@ -1,6 +1,6 @@
 import fnmatch
 
-from commands import chmod_file, move_file_safely, remove_file, rename_file
+from commands import apply_moved, chmod_file, move_file_safely, remove_file, rename_file
 from utils import X_KIND, ask_user, find_new_name, get_hash, print_instruction
 
 
@@ -42,30 +42,33 @@ def handle_duplicates(all_files, X, fallback_dir, auto_accept):
             remove_file,
             "Delete",
             auto_accept,
-            prehook=lambda: _duplicates_prehook(to_keep, X, fallback_dir, auto_accept),
+            prehook=lambda: _duplicates_prehook(to_keep, X, fallback_dir, auto_accept, all_files),
         )
         removed.extend(r)
 
     return removed
 
 
-def _duplicates_prehook(to_keep, X, fallback_dir, auto_accept):
+def _duplicates_prehook(to_keep, X, fallback_dir, auto_accept, all_files):
     if to_keep.kind == X_KIND:
         return True
 
     answer = ask_user("Move selected file to X? [y, N, q]", ["y", "N", "q"], auto_accept)
     if answer == "y":
-        res = move_file_safely(
-            to_keep.path,
-            X / to_keep.rel,
-            fallback_dir,
-        )
-        if res is None:
+        try:
+            res = move_file_safely(
+                to_keep.path,
+                X / to_keep.rel,
+                fallback_dir,
+                new_root=X,
+                new_kind=X_KIND,
+            )
+        except OSError as e:
+            print("-> Error: {}".format(e))
             return False
 
-        if res is not None and not res.get("skipped", False):
-            # TODO: Update file entry
-            pass
+        if not res.get("skipped", False):
+            apply_moved(all_files, [res])
 
         return True
 
@@ -152,9 +155,10 @@ def _interactive_pipeline(paths, fn, action, auto_accept, prehook=None):
 
     if answer == "y":
         for path in paths:
-            result = fn(path)
-            if result is not None:
-                changes.append(result)
+            try:
+                changes.append(fn(path))
+            except OSError as e:
+                print("-> Error: {}".format(e))
 
     if answer == "i":
         for i, path in enumerate(paths):
@@ -164,9 +168,10 @@ def _interactive_pipeline(paths, fn, action, auto_accept, prehook=None):
                 auto_accept,
             )
             if answer == "y":
-                result = fn(path)
-                if result is not None:
-                    changes.append(result)
+                try:
+                    changes.append(fn(path))
+                except OSError as e:
+                    print("-> Error: {}".format(e))
 
             if answer == "q":
                 break
