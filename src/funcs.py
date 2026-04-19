@@ -11,7 +11,6 @@ def handle_duplicates(all_files, X, fallback_dir, auto_accept):
             continue
         hash = get_hash(entry.path)
         files_by_hash.setdefault(hash, []).append(entry)
-
     print("Found {} duplicates in total.".format(sum(len(x) - 1 for x in files_by_hash.values() if len(x) > 1)))
 
     removed = []
@@ -19,9 +18,7 @@ def handle_duplicates(all_files, X, fallback_dir, auto_accept):
     for hash, group in files_by_hash.items():
         if len(group) < 2:
             continue
-
         group.sort(key=lambda x: x.m_time)
-
         to_keep = None
         for entry in group:
             if entry.kind == X_KIND:
@@ -29,14 +26,11 @@ def handle_duplicates(all_files, X, fallback_dir, auto_accept):
                 break
         else:
             to_keep = group[0]
-
         to_remove = [entry.path for entry in group if entry is not to_keep]
-
         if to_keep.kind != X_KIND:
             print("WARNING: File to KEEP is not from 'X'!")
         print("File to KEEP {}".format(to_keep.path))
         print("Found {} file duplicate(s)".format(len(to_remove)))
-
         r = _interactive_pipeline(
             to_remove,
             remove_file,
@@ -78,17 +72,13 @@ def _duplicates_prehook(to_keep, X, fallback_dir, auto_accept, all_files):
 
 def handle_permissions(file_entries, mode, auto_accept):
     invalid_files = [path for path, entry in file_entries.items() if entry.mode != mode]
-
     print("Found {} file(s) with invalid permissions.".format(len(invalid_files)))
-
     return _interactive_pipeline(invalid_files, lambda x: chmod_file(x, mode), "CHMOD", auto_accept)
 
 
 def handle_messy_files(file_entries, messy_chars, substitute, auto_accept):
     messy_files = [path for path, entry in file_entries.items() if any(c in messy_chars for c in entry.name)]
-
     print("Found {} messy file(s)".format(len(messy_files)))
-
     return _interactive_pipeline(
         messy_files,
         lambda x: rename_file(x, find_new_name(x, messy_chars, substitute)),
@@ -101,17 +91,13 @@ def handle_temporary_files(file_entries, patterns, auto_accept):
     temporary_files = [
         path for path, entry in file_entries.items() if any(fnmatch.fnmatch(entry.name, p) for p in patterns)
     ]
-
     print("Found {} temporary file(s).".format(len(temporary_files)))
-
     return _interactive_pipeline(temporary_files, remove_file, "Delete", auto_accept)
 
 
 def handle_empty_files(file_entries, auto_accept):
     empty_files = [path for path, entry in file_entries.items() if entry.size == 0]
-
     print("Found {} empty file(s).".format(len(empty_files)))
-
     return _interactive_pipeline(empty_files, remove_file, "Delete", auto_accept)
 
 
