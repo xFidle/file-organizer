@@ -3,7 +3,8 @@ DEFAULT_CONFIG = {
     "messy_chars": "[]()'*?$#`|\\\" ",
     "substitute": "_",
     "temp_patterns": "*~,*.tmp,*.swp,*.bak",
-    "duplicates_dir": "_dups",
+    "duplicates_fallback": "_dups",
+    "same_names_fallback": "_same",
 }
 
 
@@ -37,5 +38,9 @@ def get_substitute_char(config):
     return config["substitute"]
 
 
-def get_duplicates_dir(config):
-    return config["duplicates_dir"]
+def get_duplicates_fallback(config):
+    return config["duplicates_fallback"]
+
+
+def get_same_names_fallback(config):
+    return config["same_names_fallback"]

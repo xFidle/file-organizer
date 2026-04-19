@@ -4,6 +4,35 @@ from commands import apply_moved, chmod_file, move_file_safely, remove_file, ren
 from utils import X_KIND, ask_user, find_new_name, get_hash, print_instruction
 
 
+def handle_same_names(all_files, X, fallback_dir, auto_accept):
+    files_by_name = {}
+    for entry in all_files.values():
+        files_by_name.setdefault(entry.name, []).append(entry)
+    print("Found {} files with same names in total.".format(sum(len(x) - 1 for x in files_by_name)))
+
+    removed = []
+    for name, group in files_by_name.items():
+        if len(group) < 2:
+            continue
+        group.sort(key=lambda x: x.m_time, reverse=True)
+        to_remove = list(map(lambda e: e.path, group[1:]))
+        to_keep = group[0]
+        if to_keep.kind != X_KIND:
+            print("WARNING: File to KEEP is not from 'X'!")
+        print("File to KEEP {}".format(to_keep.path))
+        print("Found {} file duplicate(s)".format(len(to_remove)))
+        r = _interactive_pipeline(
+            to_remove,
+            remove_file,
+            "Delete",
+            auto_accept,
+            prehook=lambda: _move_prehook(to_keep, X, fallback_dir, auto_accept, all_files),
+        )
+        removed.extend(r)
+
+    return removed
+
+
 def handle_duplicates(all_files, X, fallback_dir, auto_accept):
     files_by_hash = {}
     for entry in all_files.values():
@@ -14,7 +43,6 @@ def handle_duplicates(all_files, X, fallback_dir, auto_accept):
     print("Found {} duplicates in total.".format(sum(len(x) - 1 for x in files_by_hash.values() if len(x) > 1)))
 
     removed = []
-
     for hash, group in files_by_hash.items():
         if len(group) < 2:
             continue
@@ -36,14 +64,14 @@ def handle_duplicates(all_files, X, fallback_dir, auto_accept):
             remove_file,
             "Delete",
             auto_accept,
-            prehook=lambda: _duplicates_prehook(to_keep, X, fallback_dir, auto_accept, all_files),
+            prehook=lambda: _move_prehook(to_keep, X, fallback_dir, auto_accept, all_files),
         )
         removed.extend(r)
 
     return removed
 
 
-def _duplicates_prehook(to_keep, X, fallback_dir, auto_accept, all_files):
+def _move_prehook(to_keep, X, fallback_dir, auto_accept, all_files):
     if to_keep.kind == X_KIND:
         return True
 
@@ -101,7 +129,13 @@ def handle_empty_files(file_entries, auto_accept):
     return _interactive_pipeline(empty_files, remove_file, "Delete", auto_accept)
 
 
-def _interactive_pipeline(paths, fn, action, auto_accept, prehook=None):
+def _interactive_pipeline(
+    paths,
+    fn,
+    action,
+    auto_accept,
+    prehook=None,
+):
     if not paths:
         return []
 
