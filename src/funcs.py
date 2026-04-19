@@ -8,7 +8,7 @@ def handle_same_names(all_files, X, fallback_dir, auto_accept):
     files_by_name = {}
     for entry in all_files.values():
         files_by_name.setdefault(entry.name, []).append(entry)
-    print("Found {} files with same names in total.".format(sum(len(x) - 1 for x in files_by_name)))
+    print("Found {} files with same names in total.".format(sum(len(x) - 1 for x in files_by_name.values())))
 
     removed = []
     for name, group in files_by_name.items():
@@ -19,7 +19,7 @@ def handle_same_names(all_files, X, fallback_dir, auto_accept):
         to_keep = group[0]
         if to_keep.kind != X_KIND:
             print("WARNING: File to KEEP is not from 'X'!")
-        print("File to KEEP {}".format(to_keep.path))
+        print("File to KEEP (newest) {}".format(to_keep.path))
         print("Found {} file duplicate(s)".format(len(to_remove)))
         r = _interactive_pipeline(
             to_remove,
@@ -57,7 +57,7 @@ def handle_duplicates(all_files, X, fallback_dir, auto_accept):
         to_remove = [entry.path for entry in group if entry is not to_keep]
         if to_keep.kind != X_KIND:
             print("WARNING: File to KEEP is not from 'X'!")
-        print("File to KEEP {}".format(to_keep.path))
+        print("File to KEEP (oldest) {}".format(to_keep.path))
         print("Found {} file duplicate(s)".format(len(to_remove)))
         r = _interactive_pipeline(
             to_remove,
