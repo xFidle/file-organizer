@@ -51,6 +51,7 @@ test_move_to_x() {
     return 0
 }
 
-test_fallback || exit 1
-test_keep_in_x || exit 1
-test_move_to_x || exit 1
+test_fallback        || exit 1
+test_keep_in_x       || exit 1
+test_move_to_x       || exit 1
+test_different_names || exit 1
