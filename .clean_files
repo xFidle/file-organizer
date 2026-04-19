@@ -2,5 +2,3 @@ mode = 644
 messy_chars = []:"'*?$#`|\ " "
 substitute = _
 temp_patterns = *~;*.tmp;*.swp;*.bak
-duplicates_fallback = _dups
-same_names_fallback = _same

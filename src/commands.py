@@ -1,8 +1,6 @@
 import os
 import shutil
 
-from utils import generate_unique_path, get_hash
-
 
 def remove_file(fpath):
     os.remove(fpath)
@@ -42,29 +40,15 @@ def apply_chmod(all_files, changes):
         all_files[path].mode = change["mode"]
 
 
-def move_file(src, dest, new_root, new_kind):
-    shutil.move(src, dest)
+def copy_file(src, dest, new_root, new_kind):
+    shutil.copy(src, dest)
     print("-> File moved from {} to {}".format(src, dest))
     return {"old_path": src, "new_path": dest, "new_root": new_root, "new_kind": new_kind}
 
 
-def move_file_safely(src, dest, fallback_dir, new_root, new_kind):
-    if not dest.exists():
-        dest.parent.mkdir(parents=True, exist_ok=True)
-        return move_file(src, dest, new_root, new_kind)
-
-    elif get_hash(src) != get_hash(dest):
-        dest.parent.mkdir(parents=True, exist_ok=True)
-        fallback_dir.mkdir(parents=True, exist_ok=True)
-        to = generate_unique_path(fallback_dir / dest.name)
-        return move_file(src, to, new_root, new_kind)
-
-    return {}
-
-
-def apply_moved(all_files, changes):
+def apply_copied(all_files, changes):
     for change in changes:
-        entry = all_files.pop(change["old_path"])
+        entry = change["old_path"]
         new_path = change["new_path"]
         new_root = change["new_root"]
         new_kind = change["new_kind"]
