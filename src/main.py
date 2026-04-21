@@ -12,13 +12,14 @@ from funcs import (
     handle_same_names,
     handle_temporary_files,
 )
-from utils import collect_files
+from utils import assign_exec_mode, collect_files
 
 
 def get_sys_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("X", help="Main directory directory")
     parser.add_argument("Y", nargs="+", help="Additional dirs to compare against X [Y1, Y2, ...]")
+    parser.add_argument("--dry-run", action="store_true", help="Run without modifying anything, only display changes")
     parser.add_argument("--auto-accept", action="store_true", help="Auto accept default action, don't ask for input")
     parser.add_argument("-e", "--empty", action="store_true", help="Delete empty files")
     parser.add_argument("-t", "--temporary", action="store_true", help="Delete temporary files")
@@ -34,34 +35,34 @@ def main(args):
     X, Y = Path(args.X), list(map(Path, args.Y))
     all_files = collect_files(X, Y)
     config = Config(".clean_files")
-    aa = args.auto_accept
+    exec_mode = assign_exec_mode(args.auto_accept, args.dry_run)
 
     if args.empty:
-        changes = handle_empty_files(all_files, aa)
+        changes = handle_empty_files(all_files, exec_mode)
         apply_removed(all_files, changes)
 
     if args.temporary:
-        changes = handle_temporary_files(all_files, config.temp_patterns, aa)
+        changes = handle_temporary_files(all_files, config.temp_patterns, exec_mode)
         apply_removed(all_files, changes)
 
     if args.messy:
-        changes = handle_messy_files(all_files, config.messy_chars, config.substitute, aa)
+        changes = handle_messy_files(all_files, config.messy_chars, config.substitute, exec_mode)
         apply_renamed(all_files, changes)
 
     if args.permissions:
-        changes = handle_permissions(all_files, config.mode, aa)
+        changes = handle_permissions(all_files, config.mode, exec_mode)
         apply_chmod(all_files, changes)
 
     if args.duplicates:
-        changes = handle_duplicates(all_files, aa)
+        changes = handle_duplicates(all_files, exec_mode)
         apply_removed(all_files, changes)
 
     if args.same_names:
-        changes = handle_same_names(all_files, aa)
+        changes = handle_same_names(all_files, exec_mode)
         apply_removed(all_files, changes)
 
     if args.copy:
-        changes = handle_copy(all_files, X, aa)
+        changes = handle_copy(all_files, X, exec_mode)
         apply_copied(all_files, changes)
 
 

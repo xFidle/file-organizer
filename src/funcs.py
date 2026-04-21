@@ -1,16 +1,16 @@
 import fnmatch
 
 from commands import chmod_file, copy_file, remove_file, rename_file
-from utils import X_KIND, Y_KIND, ask_user, find_new_name, get_hash, print_instruction
+from utils import Kind, ask_user, find_new_name, get_hash, print_instruction
 
 
-def handle_copy(all_files, X, auto_accept):
-    to_copy = [entry for entry in all_files.values() if entry.kind == Y_KIND and not (X / entry.rel).exists()]
+def handle_copy(all_files, X, exec_mode):
+    to_copy = [entry for entry in all_files.values() if entry.kind == Kind.Y and not (X / entry.rel).exists()]
     print("Found {} files which has no corresponding file in X!".format(len(to_copy)))
-    return _interactive_pipeline(to_copy, lambda x: copy_file(x.path, X / x.rel, X, X_KIND), "Copy", auto_accept)
+    return _interactive_pipeline(to_copy, lambda x, m: copy_file(x.path, X / x.rel, X, Kind.X, m), "Copy", exec_mode)
 
 
-def handle_same_names(all_files, auto_accept):
+def handle_same_names(all_files, exec_mode):
     files_by_name = {}
     for entry in all_files.values():
         files_by_name.setdefault(entry.name, []).append(entry)
@@ -24,13 +24,13 @@ def handle_same_names(all_files, auto_accept):
         to_keep, to_remove = group[0], group[1:]
         print("File to keep (newest) {}".format(to_keep.path))
         print("Found {} files wish same names".format(len(to_remove)))
-        r = _interactive_pipeline(to_remove, remove_file, "Delete", auto_accept)
+        r = _interactive_pipeline(to_remove, remove_file, "Delete", exec_mode)
         removed.extend(r)
 
     return removed
 
 
-def handle_duplicates(all_files, auto_accept):
+def handle_duplicates(all_files, exec_mode):
     files_by_hash = {}
     for entry in all_files.values():
         if entry.size == 0:
@@ -47,44 +47,44 @@ def handle_duplicates(all_files, auto_accept):
         to_keep, to_remove = group[0], group[1:]
         print("File to KEEP (oldest) {}".format(to_keep.path))
         print("Found {} file duplicate(s)".format(len(to_remove)))
-        r = _interactive_pipeline(to_remove, remove_file, "Delete", auto_accept)
+        r = _interactive_pipeline(to_remove, remove_file, "Delete", exec_mode)
         removed.extend(r)
 
     return removed
 
 
-def handle_permissions(file_entries, mode, auto_accept):
+def handle_permissions(file_entries, mode, exec_mode):
     invalid_files = [entry for entry in file_entries.values() if entry.mode != mode]
     print("Found {} file(s) with invalid permissions.".format(len(invalid_files)))
-    return _interactive_pipeline(invalid_files, lambda x: chmod_file(x, mode), "CHMOD", auto_accept)
+    return _interactive_pipeline(invalid_files, lambda x, m: chmod_file(x, mode, m), "CHMOD", exec_mode)
 
 
-def handle_messy_files(file_entries, messy_chars, substitute, auto_accept):
+def handle_messy_files(file_entries, messy_chars, substitute, exec_mode):
     messy_files = [entry for entry in file_entries.values() if any(c in messy_chars for c in entry.name)]
     print("Found {} messy file(s)".format(len(messy_files)))
     return _interactive_pipeline(
         messy_files,
-        lambda x: rename_file(x, find_new_name(x, messy_chars, substitute)),
+        lambda x, m: rename_file(x, find_new_name(x, messy_chars, substitute), m),
         "Sanitize (replace messy chars with '{}')".format(substitute),
-        auto_accept,
+        exec_mode,
     )
 
 
-def handle_temporary_files(file_entries, patterns, auto_accept):
+def handle_temporary_files(file_entries, patterns, exec_mode):
     temporary_files = [
         entry for entry in file_entries.values() if any(fnmatch.fnmatch(entry.name, p) for p in patterns)
     ]
     print("Found {} temporary file(s).".format(len(temporary_files)))
-    return _interactive_pipeline(temporary_files, remove_file, "Delete", auto_accept)
+    return _interactive_pipeline(temporary_files, remove_file, "Delete", exec_mode)
 
 
-def handle_empty_files(file_entries, auto_accept):
+def handle_empty_files(file_entries, exec_mode):
     empty_files = [entry for entry in file_entries.values() if entry.size == 0]
     print("Found {} empty file(s).".format(len(empty_files)))
-    return _interactive_pipeline(empty_files, remove_file, "Delete", auto_accept)
+    return _interactive_pipeline(empty_files, remove_file, "Delete", exec_mode)
 
 
-def _interactive_pipeline(entries, fn, action, auto_accept):
+def _interactive_pipeline(entries, fn, action, exec_mode):
     if not entries:
         return []
 
@@ -99,7 +99,7 @@ def _interactive_pipeline(entries, fn, action, auto_accept):
 
     print_instruction(inst)
     while True:
-        answer = ask_user("What would you like to do?", list(inst.keys()), auto_accept)
+        answer = ask_user("What would you like to do?", list(inst.keys()), exec_mode)
         if answer != "p":
             break
         for entry in entries:
@@ -112,23 +112,17 @@ def _interactive_pipeline(entries, fn, action, auto_accept):
 
     if answer == "y":
         for entry in entries:
-            try:
-                changes.append(fn(entry.path))
-            except OSError as e:
-                print("-> Error: {}".format(e))
+            changes.append(fn(entry.path, exec_mode))
 
     if answer == "i":
         for i, entry in enumerate(entries):
             answer = ask_user(
                 "[{}/{}] File: {} {}? [y, N, q]".format(i + 1, n, entry.path, action),
                 ["y", "N", "q"],
-                auto_accept,
+                exec_mode,
             )
             if answer == "y":
-                try:
-                    changes.append(fn(entry.path))
-                except OSError as e:
-                    print("-> Error: {}".format(e))
+                changes.append(fn(entry.path))
 
             if answer == "q":
                 break

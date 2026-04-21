@@ -1,10 +1,33 @@
 import hashlib
 import os
 import stat
+from enum import Enum
 from pathlib import Path
 
-X_KIND = "X"
-Y_KIND = "Y"
+
+class Kind(Enum):
+    X = 1
+    Y = 2
+
+
+class Mode(Enum):
+    Nil = 0
+    AutoAccept = 1
+    DryRun = 2
+    Both = 3
+
+
+def assign_exec_mode(auto_accept, dry_run):
+    if not auto_accept and not dry_run:
+        return Mode.Nil
+
+    elif auto_accept and not dry_run:
+        return Mode.AutoAccept
+
+    elif not auto_accept and dry_run:
+        return Mode.DryRun
+
+    return Mode.Both
 
 
 class FileEntry:
@@ -22,8 +45,8 @@ class FileEntry:
 def collect_files(X, Y_dirs):
     result = {}
 
-    scan_roots = [(X, X_KIND)]
-    scan_roots.extend([(Y, Y_KIND) for Y in Y_dirs])
+    scan_roots = [(X, Kind.X)]
+    scan_roots.extend([(Y, Kind.Y) for Y in Y_dirs])
 
     for root, root_kind in scan_roots:
         for walk_dir, _, files in os.walk(root, topdown=True):
@@ -53,8 +76,8 @@ def collect_files(X, Y_dirs):
     return result
 
 
-def ask_user(prompt, options, auto_accept=False):
-    if auto_accept:
+def ask_user(prompt, options, exec_mode):
+    if exec_mode in (Mode.AutoAccept, Mode.Both):
         return options[0]
 
     while True:
