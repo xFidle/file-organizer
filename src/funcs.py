@@ -122,7 +122,7 @@ def _interactive_pipeline(entries, fn, action, exec_mode):
                 exec_mode,
             )
             if answer == "y":
-                changes.append(fn(entry.path))
+                changes.append(fn(entry.path, exec_mode))
 
             if answer == "q":
                 break
