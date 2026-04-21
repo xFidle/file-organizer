@@ -7,7 +7,9 @@ from utils import Kind, ask_user, find_new_name, get_hash, print_instruction
 def handle_copy(all_files, X, exec_mode):
     to_copy = [entry for entry in all_files.values() if entry.kind == Kind.Y and not (X / entry.rel).exists()]
     print("Found {} files which has no corresponding file in X!".format(len(to_copy)))
-    return _interactive_pipeline(to_copy, lambda x, m: copy_file(x.path, X / x.rel, X, Kind.X, m), "Copy", exec_mode)
+    return _interactive_pipeline(
+        to_copy, lambda x, m: copy_file(x, X / all_files[x].rel, X, Kind.X, m), "Copy", exec_mode
+    )
 
 
 def handle_same_names(all_files, exec_mode):
@@ -112,7 +114,10 @@ def _interactive_pipeline(entries, fn, action, exec_mode):
 
     if answer == "y":
         for entry in entries:
-            changes.append(fn(entry.path, exec_mode))
+            try:
+                changes.append(fn(entry.path, exec_mode))
+            except OSError as e:
+                print("-> Error: {}".format(e))
 
     if answer == "i":
         for i, entry in enumerate(entries):
@@ -122,7 +127,10 @@ def _interactive_pipeline(entries, fn, action, exec_mode):
                 exec_mode,
             )
             if answer == "y":
-                changes.append(fn(entry.path, exec_mode))
+                try:
+                    changes.append(fn(entry.path, exec_mode))
+                except OSError as e:
+                    print("-> Error: {}".format(e))
 
             if answer == "q":
                 break
