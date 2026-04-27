@@ -2,7 +2,7 @@ import argparse
 from pathlib import Path
 
 from commands import apply_chmod, apply_copied, apply_removed, apply_renamed
-from config import Config
+from config import Config, load_options
 from funcs import (
     handle_copy,
     handle_duplicates,
@@ -34,7 +34,9 @@ def get_sys_args():
 def main(args):
     X, Y = Path(args.X), list(map(Path, args.Y))
     all_files = collect_files(X, Y)
-    config = Config(".clean_files")
+
+    config_path = Path.home() / ".config" / ".clean_files"
+    config = Config(load_options(config_path))
     exec_mode = assign_exec_mode(args.auto_accept, args.dry_run)
 
     if args.empty:
