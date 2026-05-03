@@ -56,19 +56,19 @@ Choosing **i** (inspect) walks through each file individually and asks `[y, N, q
 
 ```bash
 # Find and delete empty files in X and Y1, interactively
-python3 src/main.py ~/X ~/Y1 --empty
+python3 src/main.py X Y1 --empty
 
 # Remove temp files and fix permissions, auto-accepting everything
-python3 src/main.py ~/X ~/Y1 -t --permissions --auto-accept
+python3 src/main.py X Y1 -t --permissions --auto-accept
 
 # Show what duplicates would be deleted without touching anything
-python3 src/main.py ~/X ~/Y1 ~/Y2 --duplicates --dry-run
+python3 src/main.py X Y1 Y2 --duplicates --dry-run
 
 # Full cleanup in one pass
-python3 src/main.py ~/X ~/Y1 -e -t -m -p -d -s -c
+python3 src/main.py X Y1 -e -t -m -p -d -s -c
 
 # Copy all files missing from X, one by one inspection
-python3 src/main.py ~/X ~/Y1 --copy
+python3 src/main.py X Y1 --copy
 ```
 
 ## Configuration
