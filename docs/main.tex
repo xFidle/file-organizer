@@ -1,0 +1,160 @@
+\documentclass[12pt, a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage[polish]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{indentfirst}
+\usepackage{geometry}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{tabularx}
+\usepackage{listings}
+\usepackage[font=footnotesize]{caption}
+
+\geometry{margin=0.75in}
+\setlength{\parindent}{0pt}
+\linespread{1.25}
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue}
+
+\begin{document}
+
+\title{[ASU] \textendash{} Dokumentacja końcowa projektu dotyczącego
+	porządkowania plików } \author{Michał Szwejk} \date{}
+\maketitle
+
+\section*{Organizator plików}
+Przygotowany program to narzędzie wiersza poleceń do skanowania i porządkowania kolekcji plików
+rozłożonych na wiele katalogów. Dla podanego katalogu głównego \textbf{X} i jednego
+lub więcej katalogów pomocniczych \textbf{Y1}, \textbf{Y2}, \dots wykrywa problemy i
+interaktywnie proponuje poprawki. Projekt pozwala na wykonywanie operacji takich
+jak kopiowanie z katalogów podrzędnych do głownego, usuwanie duplikatów czy też
+ujednolicenie atrybutów odczytu i zapisu. Pełen spis możliwych opcji i sposobu
+ich uruchomienia podany jest w poniżej.
+
+\section*{Sposób użycia}
+Program został napisany w języku \textbf{python} \textendash{} do jego
+poprawnego uruchomienia niezbędna jest wersja tego języka w wersji co najmniej
+3.6. Program może zostać wywołany w następujący sposób:
+
+\begin{center}
+	\texttt{python3 src/main.py X Y1 [Y2 \ldots] [flagi]}
+\end{center}
+
+Argumenty przyjmowane przez program zdefiniowane są następująco:
+\begin{table}[H]
+	\centering
+	\begin{tabularx}{\textwidth}{|l|X|}
+		\hline
+		\textbf{Argument}    & \textbf{Opis}                                   \\
+		\hline
+		\texttt{X}           & Katalog główny \textendash{} kanoniczne miejsce
+		docelowe dla wszystkich plików                                         \\
+		\hline
+		\texttt{Y1 Y2 \dots} & Jeden lub więcej katalogów pomocniczych do
+		porównania z X                                                         \\
+		\hline
+	\end{tabularx}
+\end{table}
+
+Program udostępnia też flagi, które definiują jaki tryb skanaowania ma zostać
+uruchomiony. Wiele flag można łączyć w podczas jednego wykonania, zostaną one
+wtedy wykonane zgodnie z kolejnością przedstawioną w poniższej tabeli.
+\begin{table}[H]
+	\begin{tabularx}{\textwidth}{|l|l|X|}
+		\hline
+		\textbf{Kolejność} & \textbf{Flaga}                        & \textbf{Opis}                                                                                                                                                                 \\
+		\hline
+		1                  & \texttt{-e},  \texttt{---empty}       & Znajdź i usuń puste pliki.                                                                                                                                                    \\
+		\hline
+		2                  & \texttt{-t},  \texttt{---temporary}   & Znajdź i usuń pliki tymczasowe pasujące do wzorców z konfiguracji (np. \texttt{*.tmp}, \texttt{*.bak},).                                                                      \\
+		\hline
+		3                  & \texttt{-m},  \texttt{---messy}       & Znajdź pliki, których nazwy zawierają problematyczne znaki i zmień ich nazwy, zastępując te znaki znakiem zastępczym z konfiguracji.                                          \\
+		\hline
+		4                  & \texttt{-p},  \texttt{---permissions} & Znajdź pliki, których uprawnienia różnią się od docelowego trybu z konfiguracji i popraw je.                                                                                  \\
+		\hline
+		5                  & \texttt{-d},  \texttt{---duplicates}  & Znajdź pliki o identycznej zawartości we wszystkich katalogach; zaproponuj usunięcie wszystkich poza najstarszym (najstarszy = prawdopodobnie oryginał).                      \\
+		\hline
+		6                  & \texttt{-s},  \texttt{---same-names}  & Znajdź pliki o tej samej nazwie w różnych katalogach; zaproponuj usunięcie wszystkich poza najnowszym.                                                                        \\
+		\hline
+		7                  & \texttt{-c},  \texttt{---copy}        & Znajdź pliki obecne w katalogach \texttt{Y}, których brakuje w \texttt{X}, i skopiuj je do \texttt{X}, zachowując względne ścieżki. W przypadku konfliktów pliki są pomijane. \\
+		\hline
+	\end{tabularx}
+\end{table}
+
+Dodatkowo program udostępnia dwie flagi wykonania, które mogą być przydatne
+podczas debugowania bądź testowania.
+\begin{table}[H]
+	\begin{tabularx}{\linewidth}{|l|X|}
+		\hline
+		\textbf{Flaga}          & \textbf{Opis}                                                                                   \\
+		\hline
+		\texttt{---dry-run}     & Symuluj wszystkie działania bez modyfikowania czegokolwiek na dysku, wypisz potencjalne zmiany. \\
+		\hline
+		\texttt{---auto-accept} & Pomiń wszystkie pytania i automatycznie akceptuj.                                               \\
+		\hline
+	\end{tabularx}
+\end{table}
+Flagi wykonania można łączyć, ustawić obie podczas tego samego uruchomienia.
+Jeżeli flaga \texttt{---auto-accept} nie jest podana to program w przypadku
+potencjalnej modyfkiacji każdego pliku wyświetla interaktywne zaptyanie
+propounjące użytkownikowi kilka opcji (np.\ pomiń, usuń etc).
+
+\newpage
+\section*{Przykłady wywołania programu}
+
+Znajdź i usuń puste pliki w X i Y1 (interaktywnie): \\
+\texttt{python3 src/main.py X Y1 --empty} \\
+
+Usuń pliki tymczasowe i napraw uprawnienia, akceptując wszystko automatycznie: \\
+\texttt{python3 src/main.py X Y1 -t --permissions --auto-accept} \\
+
+Pokaż jakie duplikaty zostałyby usunięte bez dotykania czegokolwiek: \\
+\texttt{python3 src/main.py X Y1 Y2 --duplicates --dry-run} \\
+
+Pełne porządkowanie w jednym przebiegu: \\
+\texttt{python3 src/main.py X Y1 -e -t -m -p -d -s -c} \\
+
+Kopiuj wszystkie pliki brakujące w X, z inspekcją każdego pliku: \\
+\texttt{python3 src/main.py X Y1 --copy}
+
+\section*{Konfiguracja}
+Narzędzie odczytuje plik \texttt{.clean\_files} z katalogu
+\texttt{\$HOME/.config}. Jeśli plik nie istnieje, używana jest domyślna
+konfiguracja:
+
+\begin{center}
+	\begin{tabular}{l}
+		\texttt{mode = 644}                                    \\
+		\texttt{messy\_chars = []:"'*?\$\#`|\textbackslash{} } \\
+		\texttt{substitute = \_}                               \\
+		\texttt{temp\_patterns = *\textasciitilde{};*.tmp;*.swp;*.bak}
+	\end{tabular}
+\end{center}
+
+Znaczenie poszczególnych kluczy jest następujące:
+\begin{table}[H]
+	\begin{tabularx}{\textwidth}{|l|X|}
+		\hline
+		\textbf{Klucz}          & \textbf{Opis}                                                                                 \\
+		\hline
+		\texttt{mode}           & Docelowe uprawnienia pliku jako ósemkowy ciąg znaków (np.\ \texttt{644} = \texttt{rw-r--r--}) \\
+		\hline
+		\texttt{messy\_chars}   & Ciąg znaków uznawanych za problematyczne w nazwach plików                                     \\
+		\hline
+		\texttt{substitute}     & Pojedynczy znak zastępujący każdy problematyczny znak                                         \\
+		\hline
+		\texttt{temp\_patterns} & Wzorce dla plików tymczasowych, oddzielone średnikami                                         \\
+		\hline
+	\end{tabularx}
+\end{table}
+
+\section*{Uruchamianie testów}
+Projekt zawiera zestaw testów powłoki weryfikujących poszczególne tryby
+skanowania. Testy uruchamia się z katalogu głównego repozytorium (np.
+\texttt{./tests/test\_all.sh}). Testy tworzą tymczasowe katalogi \texttt{X},
+\texttt{Y1}, \dots i każdorazowo sprzątają po sobie po uruchomieniu.
+
+\end{document}
