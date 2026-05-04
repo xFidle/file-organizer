@@ -16,7 +16,7 @@ def handle_same_names(all_files, exec_mode):
     files_by_name = {}
     for entry in all_files.values():
         files_by_name.setdefault(entry.name, []).append(entry)
-    print("Found {} files with same names in total!\n".format(sum(len(x) - 1 for x in files_by_name.values())))
+    print("Found {} files with same names in total!".format(sum(len(x) - 1 for x in files_by_name.values())))
 
     removed = []
     for _, group in files_by_name.items():
@@ -39,7 +39,7 @@ def handle_duplicates(all_files, exec_mode):
             continue
         hash = get_hash(entry.path)
         files_by_hash.setdefault(hash, []).append(entry)
-    print("Found {} duplicates in total!\n".format(sum(len(x) - 1 for x in files_by_hash.values() if len(x) > 1)))
+    print("Found {} duplicates in total!".format(sum(len(x) - 1 for x in files_by_hash.values() if len(x) > 1)))
 
     removed = []
     for hash, group in files_by_hash.items():
@@ -63,7 +63,7 @@ def handle_permissions(file_entries, mode, exec_mode):
 
 def handle_messy_files(file_entries, messy_chars, substitute, exec_mode):
     messy_files = [entry for entry in file_entries.values() if any(c in messy_chars for c in entry.name)]
-    print("Found {} messy file(s)".format(len(messy_files)))
+    print("Found {} messy file(s).".format(len(messy_files)))
     return _interactive_pipeline(
         messy_files,
         lambda x, m: rename_file(x, find_new_name(x, messy_chars, substitute), m),
